@@ -195,7 +195,7 @@ namespace Secure_Channel_Client
                     string pass = textPass2.Text;
                     string user = textUser2.Text;
 
-
+                    // TODO: implement login phase
                 }
                 catch
                 {

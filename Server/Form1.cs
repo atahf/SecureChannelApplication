@@ -170,6 +170,8 @@ namespace Secure_Channel_Server
                     {
                         // Login Phase
                         AddMessage(getClientIp(s.RemoteEndPoint) + " is trying to login!");
+
+                        // TODO: implement login phase
                     }
                     else
                     {
