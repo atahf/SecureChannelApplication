@@ -35,7 +35,6 @@
             this.lblUser = new System.Windows.Forms.Label();
             this.tabLogin = new System.Windows.Forms.TabPage();
             this.btnLogin = new System.Windows.Forms.Button();
-            this.textMessage = new System.Windows.Forms.TextBox();
             this.textLoginLog = new System.Windows.Forms.TextBox();
             this.textServerPort2 = new System.Windows.Forms.TextBox();
             this.textServerIP2 = new System.Windows.Forms.TextBox();
@@ -216,7 +215,6 @@
             // tabLogin
             // 
             this.tabLogin.Controls.Add(this.btnLogin);
-            this.tabLogin.Controls.Add(this.textMessage);
             this.tabLogin.Controls.Add(this.textLoginLog);
             this.tabLogin.Controls.Add(this.textServerPort2);
             this.tabLogin.Controls.Add(this.textServerIP2);
@@ -238,56 +236,48 @@
             // 
             this.btnLogin.BackColor = System.Drawing.Color.LightGreen;
             this.btnLogin.Cursor = System.Windows.Forms.Cursors.Hand;
-            this.btnLogin.Location = new System.Drawing.Point(249, 365);
+            this.btnLogin.Location = new System.Drawing.Point(155, 390);
             this.btnLogin.Name = "btnLogin";
-            this.btnLogin.Size = new System.Drawing.Size(75, 23);
+            this.btnLogin.Size = new System.Drawing.Size(90, 36);
             this.btnLogin.TabIndex = 19;
             this.btnLogin.Text = "Login";
             this.btnLogin.UseVisualStyleBackColor = false;
             this.btnLogin.Click += new System.EventHandler(this.btnLogin_Click);
             // 
-            // textMessage
-            // 
-            this.textMessage.Location = new System.Drawing.Point(35, 355);
-            this.textMessage.Multiline = true;
-            this.textMessage.Name = "textMessage";
-            this.textMessage.Size = new System.Drawing.Size(166, 47);
-            this.textMessage.TabIndex = 18;
-            // 
             // textLoginLog
             // 
-            this.textLoginLog.Location = new System.Drawing.Point(35, 155);
+            this.textLoginLog.Location = new System.Drawing.Point(29, 143);
             this.textLoginLog.Multiline = true;
             this.textLoginLog.Name = "textLoginLog";
             this.textLoginLog.ReadOnly = true;
             this.textLoginLog.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-            this.textLoginLog.Size = new System.Drawing.Size(329, 174);
+            this.textLoginLog.Size = new System.Drawing.Size(341, 241);
             this.textLoginLog.TabIndex = 17;
             // 
             // textServerPort2
             // 
-            this.textServerPort2.Location = new System.Drawing.Point(264, 92);
+            this.textServerPort2.Location = new System.Drawing.Point(270, 96);
             this.textServerPort2.Name = "textServerPort2";
             this.textServerPort2.Size = new System.Drawing.Size(100, 20);
             this.textServerPort2.TabIndex = 16;
             // 
             // textServerIP2
             // 
-            this.textServerIP2.Location = new System.Drawing.Point(264, 45);
+            this.textServerIP2.Location = new System.Drawing.Point(270, 42);
             this.textServerIP2.Name = "textServerIP2";
             this.textServerIP2.Size = new System.Drawing.Size(100, 20);
             this.textServerIP2.TabIndex = 15;
             // 
             // textPass2
             // 
-            this.textPass2.Location = new System.Drawing.Point(90, 99);
+            this.textPass2.Location = new System.Drawing.Point(87, 96);
             this.textPass2.Name = "textPass2";
             this.textPass2.Size = new System.Drawing.Size(100, 20);
             this.textPass2.TabIndex = 14;
             // 
             // textUser2
             // 
-            this.textUser2.Location = new System.Drawing.Point(90, 45);
+            this.textUser2.Location = new System.Drawing.Point(87, 42);
             this.textUser2.Name = "textUser2";
             this.textUser2.Size = new System.Drawing.Size(100, 20);
             this.textUser2.TabIndex = 13;
@@ -295,7 +285,7 @@
             // lblServerPort2
             // 
             this.lblServerPort2.AutoSize = true;
-            this.lblServerPort2.Location = new System.Drawing.Point(207, 99);
+            this.lblServerPort2.Location = new System.Drawing.Point(204, 99);
             this.lblServerPort2.Name = "lblServerPort2";
             this.lblServerPort2.Size = new System.Drawing.Size(60, 13);
             this.lblServerPort2.TabIndex = 12;
@@ -304,7 +294,7 @@
             // lblServerIP2
             // 
             this.lblServerIP2.AutoSize = true;
-            this.lblServerIP2.Location = new System.Drawing.Point(207, 45);
+            this.lblServerIP2.Location = new System.Drawing.Point(204, 45);
             this.lblServerIP2.Name = "lblServerIP2";
             this.lblServerIP2.Size = new System.Drawing.Size(51, 13);
             this.lblServerIP2.TabIndex = 11;
@@ -313,7 +303,7 @@
             // lblPass2
             // 
             this.lblPass2.AutoSize = true;
-            this.lblPass2.Location = new System.Drawing.Point(32, 99);
+            this.lblPass2.Location = new System.Drawing.Point(26, 99);
             this.lblPass2.Name = "lblPass2";
             this.lblPass2.Size = new System.Drawing.Size(53, 13);
             this.lblPass2.TabIndex = 10;
@@ -322,7 +312,7 @@
             // lblUser2
             // 
             this.lblUser2.AutoSize = true;
-            this.lblUser2.Location = new System.Drawing.Point(32, 45);
+            this.lblUser2.Location = new System.Drawing.Point(26, 45);
             this.lblUser2.Name = "lblUser2";
             this.lblUser2.Size = new System.Drawing.Size(55, 13);
             this.lblUser2.TabIndex = 9;
@@ -369,7 +359,6 @@
         private System.Windows.Forms.Label lblPass;
         private System.Windows.Forms.Label lblUser;
         private System.Windows.Forms.Button btnLogin;
-        private System.Windows.Forms.TextBox textMessage;
         private System.Windows.Forms.TextBox textLoginLog;
         private System.Windows.Forms.TextBox textServerPort2;
         private System.Windows.Forms.TextBox textServerIP2;

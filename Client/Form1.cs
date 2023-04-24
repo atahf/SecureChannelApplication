@@ -179,7 +179,6 @@ namespace Secure_Channel_Client
                         textServerIP.ReadOnly = true;
                         textServerPort.ReadOnly = true;
                         connected = true;
-                        loggedIn = true;
                         AddEnrollLog("Connected to the server.");
 
                         Thread receiveThread = new Thread(new ThreadStart(Login));
@@ -254,31 +253,55 @@ namespace Secure_Channel_Client
                         {
                             byte[] enc_msg_hex = hexStringToByteArray(enc_msg);
                             string enc_res = Encoding.Default.GetString(enc_msg_hex);
-                            byte[] enc_suc = decryptWithAES128(enc_res, AES128key, AES128IV);
-                            string response = Encoding.Default.GetString(enc_suc);
 
-                            AddLoginLog(response);
-                            if (response == "success")
+                            try
                             {
-                                AddLoginLog("You have successfully logged in!");
+                                byte[] enc_suc = decryptWithAES128(enc_res, AES128key, AES128IV);
+                                string response = Encoding.Default.GetString(enc_suc);
+
+                                AddLoginLog(response);
+                                if (response == "success")
+                                {
+                                    AddLoginLog("You have successfully logged in!");
+                                    loggedIn = true;
+
+                                    while (true) { }
+                                }
+                                else if (response == "already")
+                                {
+                                    AddLoginLog("there is already a user online with same username!");
+                                }
+                                else
+                                {
+                                    AddLoginLog("this should never happen!");
+
+                                    socket.Close();
+                                    connected = false;
+                                }
                             }
-                            else if (response == "already")
+                            catch (Exception ex)
                             {
-                                AddLoginLog("there is already a user online with same username!");
-                            }
-                            else if (response == "error")
-                            {
-                                AddLoginLog("wrong  password!");
-                            }
-                            else
-                            {
-                                AddLoginLog("this should never happen!");
+                                AddLoginLog("wrong  password, try again!");
+
+
+                                AddEnrollLog("Connected to the server.");
+
+                                socket.Close();
+
+                                btnEnroll.Enabled = true;
+                                textPass.ReadOnly = false;
+                                connected = false;
+                                btnLogin.Text = "Login";
+                                btnLogin.BackColor = Color.LightGreen;
                             }
                         }
                     }
                     else
                     {
                         AddLoginLog("something went wrong!");
+
+                        socket.Close();
+                        connected = false;
                     }
                 }
                 catch
