@@ -23,6 +23,8 @@ namespace Secure_Channel_Server
         private Socket serverSocket;
         private List<Socket> socketList = new List<Socket>();
 
+        private List<string> active_users = new List<string>();
+
         private string RSAxmlKey3072_enc_dec;
         private string RSAxmlKey3072_sign_verif;
 
@@ -147,62 +149,144 @@ namespace Secure_Channel_Server
         {
             Socket s = socketList[socketList.Count - 1];
             bool connected = true;
+            bool loggedIn = false;
+            string user = "";
 
             while (connected && !terminating)
             {
                 try
                 {
-                    Byte[] buffer = new Byte[3072];
-                    s.Receive(buffer);
-
-                    string incomingMessageHexS = Encoding.Default.GetString(buffer);
-                    incomingMessageHexS = incomingMessageHexS.Substring(0, incomingMessageHexS.IndexOf("\0"));
-
-                    byte[] incomingMessageHex = hexStringToByteArray(incomingMessageHexS);
-                    string incomingMessage = Encoding.Default.GetString(incomingMessageHex);
-
-
-                    byte[] decrypt = decryptWithRSA(incomingMessage, 3072, RSAxmlKey3072_enc_dec);
-                    string decryptS = Encoding.Default.GetString(decrypt);
-                    //AddMessage(getClientIp(s.RemoteEndPoint) + " sent request with following payload: " + decryptS);
-
-                    if (decryptS.IndexOf(":") == -1)
+                    if (loggedIn)
                     {
-                        // Login Phase
-                        AddMessage(getClientIp(s.RemoteEndPoint) + " is trying to login!");
-
-                        // TODO: implement login phase
+                        // waiting for step 2 of project!
                     }
                     else
                     {
-                        // Enroll Phase;
-                        AddMessage(getClientIp(s.RemoteEndPoint) + " is trying to enroll!");
+                        Byte[] buffer = new Byte[3072];
+                        s.Receive(buffer);
 
-                        string[] data = decryptS.Split(':');
-                        string response;
-                        if (userExist(data[1]))
+                        string incomingMessageHexS = Encoding.Default.GetString(buffer);
+                        incomingMessageHexS = incomingMessageHexS.Substring(0, incomingMessageHexS.IndexOf("\0"));
+
+                        if (incomingMessageHexS.Substring(0, 5) == "auth:")
                         {
-                            response = "error";
+                            // Login Phase
+                            AddMessage(getClientIp(s.RemoteEndPoint) + " is trying to login as " + user);
+
+                            user = incomingMessageHexS.Substring(5);
+                            string pass = getPass(user);
+
+                            // Generating 128-bit random number using Cryptography library
+                            byte[] randomNumber = new byte[16];
+                            using (var rng = new RNGCryptoServiceProvider())
+                            {
+                                rng.GetBytes(randomNumber);
+                            }
+                            string rndNum = Encoding.Default.GetString(randomNumber);
+                            s.Send(randomNumber);
+
+                            Byte[] client_HMACrnd = new Byte[64];
+                            s.Receive(client_HMACrnd);
+
+                            string response;
+                            if (pass == "")
+                            {
+                                response = "no_user";
+
+                                AddMessage(getClientIp(s.RemoteEndPoint) + " there is no such user enrolled!");
+                            }
+                            else
+                            {
+                                byte[] lowerQuarter = hexStringToByteArray(pass.Substring(0, 32));
+                                byte[] HMACrnd = applyHMACwithSHA512(rndNum, lowerQuarter);
+
+                                if (HMACrnd.SequenceEqual(client_HMACrnd))
+                                {
+                                    if (active_users.Contains(user))
+                                    {
+                                        response = "already";
+
+                                        AddMessage(getClientIp(s.RemoteEndPoint) + " there is already a user online with same username!");
+                                    }
+                                    else
+                                    {
+                                        response = "success";
+
+                                        AddMessage(getClientIp(s.RemoteEndPoint) + " is successfully logged in!");
+                                        active_users.Add(user);
+                                        loggedIn = true;
+                                    }
+                                }
+                                else
+                                {
+                                    response = "error";
+
+                                    AddMessage(getClientIp(s.RemoteEndPoint) + " failed to log in due to wrong password!");
+                                }
+
+                                byte[] AES128key = hexStringToByteArray(pass.Substring(0, 32));
+                                byte[] AES128IV = hexStringToByteArray(pass.Substring(32, 32));
+
+                                byte[] auth_res = encryptWithAES128(response, AES128key, AES128IV);
+                                response = generateHexStringFromByteArray(auth_res);
+                            }
+
+                            byte[] auth_res_signed = signWithRSA(response, 3072, RSAxmlKey3072_sign_verif);
+                            string signedResponseHexS = generateHexStringFromByteArray(auth_res_signed) + '\0';
+
+                            string auth_sign_res = response + ":auth:" + signedResponseHexS;
+                            byte[] signedResponseHex = Encoding.ASCII.GetBytes(auth_sign_res);
+
+                            s.Send(signedResponseHex);
+
+                            if(!loggedIn)
+                            {
+                                AddMessage(getClientIp(s.RemoteEndPoint) + " disconnected!");
+
+                                s.Close();
+                                socketList.Remove(s);
+                                connected = false;
+                            }
                         }
                         else
                         {
-                            response = "success";
-                            write2DB(decryptS);
+                            // Enroll Phase;
+                            byte[] incomingMessageHex = hexStringToByteArray(incomingMessageHexS);
+                            string incomingMessage = Encoding.Default.GetString(incomingMessageHex);
+
+
+                            byte[] decrypt = decryptWithRSA(incomingMessage, 3072, RSAxmlKey3072_enc_dec);
+                            string decryptS = Encoding.Default.GetString(decrypt);
+                            //AddMessage(getClientIp(s.RemoteEndPoint) + " sent request with following payload: " + decryptS);
+
+                            AddMessage(getClientIp(s.RemoteEndPoint) + " is trying to enroll!");
+
+                            string[] data = decryptS.Split(':');
+                            string response;
+                            if (userExist(data[1]))
+                            {
+                                response = "error";
+                            }
+                            else
+                            {
+                                response = "success";
+                                write2DB(decryptS);
+                            }
+                            byte[] signedResponse = signWithRSA(response, 3072, RSAxmlKey3072_sign_verif);
+                            string signedResponseHexS = generateHexStringFromByteArray(signedResponse) + '\0';
+                            byte[] signedResponseHex = Encoding.ASCII.GetBytes(signedResponseHexS);
+
+                            s.Send(signedResponseHex);
+
+                            AddMessage(getClientIp(s.RemoteEndPoint) + "'s enrollment response: " + response);
+                            //AddMessage(getClientIp(s.RemoteEndPoint) + "'s enrollment response in hex format: " + generateHexStringFromByteArray(signedResponse));
+
+                            AddMessage(getClientIp(s.RemoteEndPoint) + " disconnected!");
+
+                            s.Close();
+                            socketList.Remove(s);
+                            connected = false;
                         }
-                        byte[] signedResponse = signWithRSA(response, 3072, RSAxmlKey3072_sign_verif);
-                        string signedResponseHexS = generateHexStringFromByteArray(signedResponse) + '\0';
-                        byte[] signedResponseHex = Encoding.ASCII.GetBytes(signedResponseHexS);
-
-                        s.Send(signedResponseHex);
-
-                        AddMessage(getClientIp(s.RemoteEndPoint) + "'s enrollment response: " + response);
-                        //AddMessage(getClientIp(s.RemoteEndPoint) + "'s enrollment response in hex format: " + generateHexStringFromByteArray(signedResponse));
-
-                        AddMessage(getClientIp(s.RemoteEndPoint) + " disconnected!");
-
-                        s.Close();
-                        socketList.Remove(s);
-                        connected = false;
                     }
                 }
                 catch (Exception ex)
@@ -211,6 +295,12 @@ namespace Secure_Channel_Server
                     {
                         AddMessage(getClientIp(s.RemoteEndPoint) + ": Error " + ex.Message);
                         AddMessage(getClientIp(s.RemoteEndPoint) + " disconnected!");
+
+                        if (active_users.Contains(user))
+                        {
+                            active_users.Remove(user);
+                            AddMessage(getClientIp(s.RemoteEndPoint) + " is removed from online users list!");
+                        }
                     }
 
                     s.Close();
@@ -266,6 +356,26 @@ namespace Secure_Channel_Server
                 }
             }
             return false;
+        }
+
+        private string getPass(string user)
+        {
+            if (File.Exists(db))
+            {
+                using (StreamReader reader = new StreamReader(db))
+                {
+                    string line;
+                    while ((line = reader.ReadLine()) != null)
+                    {
+                        string[] data = line.Split(':');
+                        if (data[1] == user)
+                        {
+                            return data[0];
+                        }
+                    }
+                }
+            }
+            return "";
         }
 
         private string getChannel(string user)
@@ -386,11 +496,60 @@ namespace Secure_Channel_Server
 
             try
             {
-                result = rsaObject.SignData(byteInput, "SHA256");
+                result = rsaObject.SignData(byteInput, "SHA512");
             }
             catch (Exception e)
             {
                 Console.WriteLine(e.Message);
+            }
+
+            return result;
+        }
+
+        // HMAC with SHA-512
+        static byte[] applyHMACwithSHA512(string input, byte[] key)
+        {
+            // convert input string to byte array
+            byte[] byteInput = Encoding.Default.GetBytes(input);
+            // create HMAC applier object from System.Security.Cryptography
+            HMACSHA512 hmacSHA512 = new HMACSHA512(key);
+            // get the result of HMAC operation
+            byte[] result = hmacSHA512.ComputeHash(byteInput);
+
+            return result;
+        }
+
+        // encryption with AES-128
+        static byte[] encryptWithAES128(string input, byte[] key, byte[] IV)
+        {
+            // convert input string to byte array
+            byte[] byteInput = Encoding.Default.GetBytes(input);
+
+            // create AES object from System.Security.Cryptography
+            RijndaelManaged aesObject = new RijndaelManaged();
+            // since we want to use AES-128
+            aesObject.KeySize = 128;
+            // block size of AES is 128 bits
+            aesObject.BlockSize = 128;
+            // mode -> CipherMode.*
+            aesObject.Mode = CipherMode.CBC;
+            // feedback size should be equal to block size
+            aesObject.FeedbackSize = 128;
+            // set the key
+            aesObject.Key = key;
+            // set the IV
+            aesObject.IV = IV;
+            // create an encryptor with the settings provided
+            ICryptoTransform encryptor = aesObject.CreateEncryptor();
+            byte[] result = null;
+
+            try
+            {
+                result = encryptor.TransformFinalBlock(byteInput, 0, byteInput.Length);
+            }
+            catch (Exception e) // if encryption fails
+            {
+                Console.WriteLine(e.Message); // display the cause
             }
 
             return result;

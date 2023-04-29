@@ -20,6 +20,7 @@ namespace Secure_Channel_Client
         private bool connected = false;
         private Socket socket = null;
 
+        private bool loggedIn = false;
         private string channel = "";
 
         private string RSAxmlKey3072_encryption;
@@ -153,35 +154,48 @@ namespace Secure_Channel_Client
 
         private void btnLogin_Click(object sender, EventArgs e)
         {
-            socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-            string ip = textServerIP2.Text;
-            string portNum = textServerPort2.Text;
-            int port_num;
-            if (Int32.TryParse(portNum, out port_num))
+            if (loggedIn)
             {
-                try
-                {
-                    socket.Connect(ip, port_num);
-                    btnEnroll.Enabled = false;
-                    textUser.ReadOnly = true;
-                    textPass.ReadOnly = true;
-                    textServerIP.ReadOnly = true;
-                    textServerPort.ReadOnly = true;
-                    connected = true;
-                    AddEnrollLog("Connected to the server.");
-
-                    Thread receiveThread = new Thread(new ThreadStart(Login));
-                    receiveThread.Start();
-                }
-                catch
-                {
-                    AddEnrollLog("Could not connect to the server.");
-                }
-
+                socket.Close();
+                loggedIn = false;
+                connected = false;
+                btnLogin.Text = "Login";
+                btnLogin.BackColor = Color.LightGreen;
             }
             else
             {
-                AddEnrollLog("Check the port number.");
+                socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+                string ip = textServerIP2.Text;
+                string portNum = textServerPort2.Text;
+                int port_num;
+                if (Int32.TryParse(portNum, out port_num))
+                {
+                    try
+                    {
+                        socket.Connect(ip, port_num);
+                        btnEnroll.Enabled = false;
+                        textUser.ReadOnly = true;
+                        textPass.ReadOnly = true;
+                        textServerIP.ReadOnly = true;
+                        textServerPort.ReadOnly = true;
+                        connected = true;
+                        AddEnrollLog("Connected to the server.");
+
+                        Thread receiveThread = new Thread(new ThreadStart(Login));
+                        receiveThread.Start();
+                        btnLogin.Text = "Disconnect";
+                        btnLogin.BackColor = Color.Red;
+                    }
+                    catch
+                    {
+                        AddEnrollLog("Could not connect to the server.");
+                    }
+
+                }
+                else
+                {
+                    AddEnrollLog("Check the port number.");
+                }
             }
         }
 
@@ -195,7 +209,100 @@ namespace Secure_Channel_Client
                     string pass = textPass2.Text;
                     string user = textUser2.Text;
 
-                    // TODO: implement login phase
+                    byte[] hashedPass = hashWithSHA512(pass);
+
+                    byte[] lowerQuarter = new byte[16];
+                    Array.Copy(hashedPass, 0, lowerQuarter, 0, 16);
+
+                    byte[] AES128key = new byte[16];
+                    byte[] AES128IV = new byte[16];
+
+                    Array.Copy(hashedPass, 0, AES128key, 0, 16);
+                    Array.Copy(hashedPass, 16, AES128IV, 0, 16);
+
+                    string authReqS = "auth:" + user;
+                    byte[] authReq = Encoding.ASCII.GetBytes(authReqS);
+                    socket.Send(authReq);
+
+                    Byte[] buffer = new Byte[16];
+                    socket.Receive(buffer);
+                    string rndNum = Encoding.Default.GetString(buffer);
+
+                    byte[] HMACrndNum = applyHMACwithSHA512(rndNum, lowerQuarter);
+                    socket.Send(HMACrndNum);
+
+                    Byte[] auth_data_buff = new Byte[3072];
+                    socket.Receive(auth_data_buff);
+
+                    string auth_dataS = Encoding.Default.GetString(auth_data_buff);
+
+                    string enc_msg = auth_dataS.Substring(0, auth_dataS.IndexOf(":auth:"));
+                    string msg_sign = auth_dataS.Substring(auth_dataS.IndexOf(":auth:") + 6);
+                    msg_sign = msg_sign.Substring(0, msg_sign.IndexOf("\0"));
+                    byte[] sign = hexStringToByteArray(msg_sign);
+
+                    bool verif = verifyWithRSA(enc_msg, 3072, RSAxmlKey3072_sign, sign);
+
+                    if(verif)
+                    {
+                        if(enc_msg == "no_user")
+                        {
+                            AddLoginLog("wrong username!");
+                        }
+                        else
+                        {
+                            byte[] enc_msg_hex = hexStringToByteArray(enc_msg);
+                            string enc_res = Encoding.Default.GetString(enc_msg_hex);
+
+                            try
+                            {
+                                byte[] enc_suc = decryptWithAES128(enc_res, AES128key, AES128IV);
+                                string response = Encoding.Default.GetString(enc_suc);
+
+                                AddLoginLog(response);
+                                if (response == "success")
+                                {
+                                    AddLoginLog("You have successfully logged in!");
+                                    loggedIn = true;
+
+                                    while (true) { }
+                                }
+                                else if (response == "already")
+                                {
+                                    AddLoginLog("there is already a user online with same username!");
+                                }
+                                else
+                                {
+                                    AddLoginLog("this should never happen!");
+
+                                    socket.Close();
+                                    connected = false;
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                AddLoginLog("wrong  password, try again!");
+
+
+                                AddEnrollLog("Connected to the server.");
+
+                                socket.Close();
+
+                                btnEnroll.Enabled = true;
+                                textPass.ReadOnly = false;
+                                connected = false;
+                                btnLogin.Text = "Login";
+                                btnLogin.BackColor = Color.LightGreen;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        AddLoginLog("something went wrong!");
+
+                        socket.Close();
+                        connected = false;
+                    }
                 }
                 catch
                 {
@@ -334,11 +441,96 @@ namespace Secure_Channel_Client
 
             try
             {
-                result = rsaObject.VerifyData(byteInput, "SHA256", signature);
+                result = rsaObject.VerifyData(byteInput, "SHA512", signature);
             }
             catch (Exception e)
             {
                 Console.WriteLine(e.Message);
+            }
+
+            return result;
+        }
+
+        // HMAC with SHA-512
+        static byte[] applyHMACwithSHA512(string input, byte[] key)
+        {
+            // convert input string to byte array
+            byte[] byteInput = Encoding.Default.GetBytes(input);
+            // create HMAC applier object from System.Security.Cryptography
+            HMACSHA512 hmacSHA512 = new HMACSHA512(key);
+            // get the result of HMAC operation
+            byte[] result = hmacSHA512.ComputeHash(byteInput);
+
+            return result;
+        }
+
+        // encryption with AES-128
+        static byte[] decryptWithAES128(string input, byte[] key, byte[] IV)
+        {
+            // convert input string to byte array
+            byte[] byteInput = Encoding.Default.GetBytes(input);
+
+            // create AES object from System.Security.Cryptography
+            RijndaelManaged aesObject = new RijndaelManaged();
+            // since we want to use AES-128
+            aesObject.KeySize = 128;
+            // block size of AES is 128 bits
+            aesObject.BlockSize = 128;
+            // mode -> CipherMode.*
+            aesObject.Mode = CipherMode.CBC;
+            // feedback size should be equal to block size
+            // aesObject.FeedbackSize = 128;
+            // set the key
+            aesObject.Key = key;
+            // set the IV
+            aesObject.IV = IV;
+            // create an encryptor with the settings provided
+            ICryptoTransform decryptor = aesObject.CreateDecryptor();
+            byte[] result = null;
+
+            try
+            {
+                result = decryptor.TransformFinalBlock(byteInput, 0, byteInput.Length);
+            }
+            catch (Exception e) // if encryption fails
+            {
+                Console.WriteLine(e.Message); // display the cause
+            }
+
+            return result;
+        }
+
+        // encryption with AES-128
+        static byte[] encryptWithAES128(string input, byte[] key, byte[] IV)
+        {
+            // convert input string to byte array
+            byte[] byteInput = Encoding.Default.GetBytes(input);
+
+            // create AES object from System.Security.Cryptography
+            RijndaelManaged aesObject = new RijndaelManaged();
+            // since we want to use AES-128
+            aesObject.KeySize = 128;
+            // block size of AES is 128 bits
+            aesObject.BlockSize = 128;
+            // mode -> CipherMode.*
+            aesObject.Mode = CipherMode.CBC;
+            // feedback size should be equal to block size
+            aesObject.FeedbackSize = 128;
+            // set the key
+            aesObject.Key = key;
+            // set the IV
+            aesObject.IV = IV;
+            // create an encryptor with the settings provided
+            ICryptoTransform encryptor = aesObject.CreateEncryptor();
+            byte[] result = null;
+
+            try
+            {
+                result = encryptor.TransformFinalBlock(byteInput, 0, byteInput.Length);
+            }
+            catch (Exception e) // if encryption fails
+            {
+                Console.WriteLine(e.Message); // display the cause
             }
 
             return result;
