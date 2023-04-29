@@ -245,6 +245,7 @@ namespace Secure_Channel_Client
 
                     if(verif)
                     {
+                        // since no_user respone will be sent in clear we can first check that
                         if(enc_msg == "no_user")
                         {
                             AddLoginLog("wrong username!");
@@ -254,6 +255,10 @@ namespace Secure_Channel_Client
                             byte[] enc_msg_hex = hexStringToByteArray(enc_msg);
                             string enc_res = Encoding.Default.GetString(enc_msg_hex);
 
+                            /* reason of try-catch is because if we fail in decryption of response it 
+                             * will mean that user entered his/her password wrong, so in catch block
+                             * it will display that password is entered wrong
+                             */
                             try
                             {
                                 byte[] enc_suc = decryptWithAES128(enc_res, AES128key, AES128IV);
@@ -267,6 +272,10 @@ namespace Secure_Channel_Client
 
                                     while (true) { }
                                 }
+
+                                /* if decrypted message is "already" it means that there is anothere user 
+                                 * with same username online and connected to server.
+                                 */
                                 else if (response == "already")
                                 {
                                     AddLoginLog("there is already a user online with same username!");
@@ -279,7 +288,7 @@ namespace Secure_Channel_Client
                                     connected = false;
                                 }
                             }
-                            catch (Exception ex)
+                            catch
                             {
                                 AddLoginLog("wrong  password, try again!");
 

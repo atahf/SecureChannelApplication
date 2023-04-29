@@ -23,6 +23,7 @@ namespace Secure_Channel_Server
         private Socket serverSocket;
         private List<Socket> socketList = new List<Socket>();
 
+        // this will help to keep track of online and connected users to server to avoid any duplicate usernamed users
         private List<string> active_users = new List<string>();
 
         private string RSAxmlKey3072_enc_dec;
@@ -168,6 +169,7 @@ namespace Secure_Channel_Server
                         string incomingMessageHexS = Encoding.Default.GetString(buffer);
                         incomingMessageHexS = incomingMessageHexS.Substring(0, incomingMessageHexS.IndexOf("\0"));
 
+                        // if it has "auth:" at beggining of string then it is a login request
                         if (incomingMessageHexS.Substring(0, 5) == "auth:")
                         {
                             // Login Phase
@@ -189,6 +191,12 @@ namespace Secure_Channel_Server
                             s.Receive(client_HMACrnd);
 
                             string response;
+
+                            /*  if pass="" it means that there is no such user in 
+                             *  db, so since there is no a user to use its password
+                             *  as encryption key of authentication request response
+                             *  then no_user response will be sent in clear
+                            */
                             if (pass == "")
                             {
                                 response = "no_user";
@@ -197,6 +205,7 @@ namespace Secure_Channel_Server
                             }
                             else
                             {
+                                // lower quarter of string means first 25% of string
                                 byte[] lowerQuarter = hexStringToByteArray(pass.Substring(0, 32));
                                 byte[] HMACrnd = applyHMACwithSHA512(rndNum, lowerQuarter);
 
@@ -234,6 +243,7 @@ namespace Secure_Channel_Server
                             byte[] auth_res_signed = signWithRSA(response, 3072, RSAxmlKey3072_sign_verif);
                             string signedResponseHexS = generateHexStringFromByteArray(auth_res_signed) + '\0';
 
+                            // concatinating response message with its signiture
                             string auth_sign_res = response + ":auth:" + signedResponseHexS;
                             byte[] signedResponseHex = Encoding.ASCII.GetBytes(auth_sign_res);
 
