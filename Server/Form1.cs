@@ -91,6 +91,9 @@ namespace Secure_Channel_Server
                 
                 AddMessage("Server started");
                 AddMessage("Listening on " + serverIp + ":" + serverPort);
+
+                AddMessage("\r\n\r\n" + "hex(RSA Encryption key): " + generateHexStringFromString(RSAxmlKey3072_enc_dec));
+                AddMessage("\r\n\r\n" + "hex(RSA Sign key): " + generateHexStringFromString(RSAxmlKey3072_sign_verif));
             }
             else
             {
@@ -173,10 +176,15 @@ namespace Secure_Channel_Server
                         if (incomingMessageHexS.Substring(0, 5) == "auth:")
                         {
                             // Login Phase
-                            AddMessage(getClientIp(s.RemoteEndPoint) + " is trying to login as " + user);
 
                             user = incomingMessageHexS.Substring(5);
                             string pass = getPass(user);
+
+                   
+
+                            AddMessage("\r\n\r\n" + "A login request come from ip " + getClientIp(s.RemoteEndPoint) + " , and username "  + user + ". The message is: " + incomingMessageHexS);
+
+                            
 
                             // Generating 128-bit random number using Cryptography library
                             byte[] randomNumber = new byte[16];
@@ -185,10 +193,13 @@ namespace Secure_Channel_Server
                                 rng.GetBytes(randomNumber);
                             }
                             string rndNum = Encoding.Default.GetString(randomNumber);
+                            AddMessage("\r\n\r\n" + "Created and sent 128 bit number for challenge: " + generateHexStringFromByteArray(randomNumber));
                             s.Send(randomNumber);
 
                             Byte[] client_HMACrnd = new Byte[64];
                             s.Receive(client_HMACrnd);
+
+                            AddMessage("\r\n\r\n" + "HMAC of the number received from the client: " + generateHexStringFromByteArray(client_HMACrnd));
 
                             string response;
 
@@ -201,7 +212,7 @@ namespace Secure_Channel_Server
                             {
                                 response = "no_user";
 
-                                AddMessage(getClientIp(s.RemoteEndPoint) + " there is no such user enrolled!");
+                                AddMessage("\r\n\r\n" + getClientIp(s.RemoteEndPoint) + " there is no such user enrolled!");
                             }
                             else
                             {
@@ -211,17 +222,18 @@ namespace Secure_Channel_Server
 
                                 if (HMACrnd.SequenceEqual(client_HMACrnd))
                                 {
+                                    AddMessage("\r\n\r\n" + "HMAC verified.");
                                     if (active_users.Contains(user))
                                     {
                                         response = "already";
 
-                                        AddMessage(getClientIp(s.RemoteEndPoint) + " there is already a user online with same username!");
+                                        AddMessage("\r\n\r\n" + getClientIp(s.RemoteEndPoint) + " there is already a user online with same username!");
                                     }
                                     else
                                     {
                                         response = "success";
 
-                                        AddMessage(getClientIp(s.RemoteEndPoint) + " is successfully logged in!");
+                                        AddMessage("\r\n\r\n" + getClientIp(s.RemoteEndPoint) + " is successfully logged in!");
                                         active_users.Add(user);
                                         loggedIn = true;
                                     }
@@ -230,18 +242,24 @@ namespace Secure_Channel_Server
                                 {
                                     response = "error";
 
-                                    AddMessage(getClientIp(s.RemoteEndPoint) + " failed to log in due to wrong password!");
+                                    AddMessage("\r\n\r\n" + getClientIp(s.RemoteEndPoint) +": " +user +" failed to log in due to wrong password!");
                                 }
 
-                                byte[] AES128key = hexStringToByteArray(pass.Substring(0, 32));
-                                byte[] AES128IV = hexStringToByteArray(pass.Substring(32, 32));
+                                byte[] AES128key = hexStringToByteArray(pass.Substring(64, 32));
+                                byte[] AES128IV = hexStringToByteArray(pass.Substring(96, 32));
+
+                                AddMessage("\r\n\r\n" + "AES-128 key is: " + generateHexStringFromByteArray(AES128key));
+                                AddMessage("\r\n\r\n" + "AES-128 IV is: " + generateHexStringFromByteArray(AES128IV));
 
                                 byte[] auth_res = encryptWithAES128(response, AES128key, AES128IV);
                                 response = generateHexStringFromByteArray(auth_res);
+                                AddMessage("\r\n\r\n" + "Encrypted response message is: " + response);
                             }
 
                             byte[] auth_res_signed = signWithRSA(response, 3072, RSAxmlKey3072_sign_verif);
                             string signedResponseHexS = generateHexStringFromByteArray(auth_res_signed) + '\0';
+
+                            AddMessage("\r\n\r\n" + "Signed response message is: " + signedResponseHexS);
 
                             // concatinating response message with its signiture
                             string auth_sign_res = response + ":auth:" + signedResponseHexS;
@@ -251,7 +269,7 @@ namespace Secure_Channel_Server
 
                             if(!loggedIn)
                             {
-                                AddMessage(getClientIp(s.RemoteEndPoint) + " disconnected!");
+                                AddMessage("\r\n\r\n" + getClientIp(s.RemoteEndPoint) + " disconnected!");
 
                                 s.Close();
                                 socketList.Remove(s);
@@ -264,34 +282,42 @@ namespace Secure_Channel_Server
                             byte[] incomingMessageHex = hexStringToByteArray(incomingMessageHexS);
                             string incomingMessage = Encoding.Default.GetString(incomingMessageHex);
 
+                            AddMessage("\r\n\r\n" + "An enrollment request come from " + getClientIp(s.RemoteEndPoint) + ": " + incomingMessageHexS);
+
 
                             byte[] decrypt = decryptWithRSA(incomingMessage, 3072, RSAxmlKey3072_enc_dec);
                             string decryptS = Encoding.Default.GetString(decrypt);
+                            AddMessage("\r\n\r\n" + "After decryption: " + decryptS);
                             //AddMessage(getClientIp(s.RemoteEndPoint) + " sent request with following payload: " + decryptS);
 
-                            AddMessage(getClientIp(s.RemoteEndPoint) + " is trying to enroll!");
+                            
 
                             string[] data = decryptS.Split(':');
                             string response;
                             if (userExist(data[1]))
                             {
                                 response = "error";
+                                AddMessage("\r\n\r\n" + "This username is taken. The message 'error' is signed and sent back to client.");
                             }
                             else
                             {
                                 response = "success";
+                                AddMessage("\r\n\r\n" + "The enrollment succeed the message 'success' is signed and sent back to client, and required information is written to database.");
                                 write2DB(decryptS);
                             }
                             byte[] signedResponse = signWithRSA(response, 3072, RSAxmlKey3072_sign_verif);
                             string signedResponseHexS = generateHexStringFromByteArray(signedResponse) + '\0';
+
+                            AddMessage("\r\n\r\n" + "Signed and sent message: " + signedResponseHexS);
+
                             byte[] signedResponseHex = Encoding.ASCII.GetBytes(signedResponseHexS);
 
                             s.Send(signedResponseHex);
 
-                            AddMessage(getClientIp(s.RemoteEndPoint) + "'s enrollment response: " + response);
+                            
                             //AddMessage(getClientIp(s.RemoteEndPoint) + "'s enrollment response in hex format: " + generateHexStringFromByteArray(signedResponse));
 
-                            AddMessage(getClientIp(s.RemoteEndPoint) + " disconnected!");
+                            AddMessage("\r\n\r\n" + getClientIp(s.RemoteEndPoint) + " disconnected!");
 
                             s.Close();
                             socketList.Remove(s);
@@ -338,7 +364,7 @@ namespace Secure_Channel_Server
                     while ((line = reader.ReadLine()) != null)
                     {
                         string[] data = line.Split(':');
-                        if(data[0] == s)
+                        if(data[1] == s)
                         {
                             return true;
                         }
@@ -366,6 +392,12 @@ namespace Secure_Channel_Server
                 }
             }
             return false;
+        }
+
+        static string generateHexStringFromString(string input)
+        {
+            byte[] bytes = Encoding.ASCII.GetBytes(input);
+            return BitConverter.ToString(bytes).Replace("-", "");
         }
 
         private string getPass(string user)
@@ -410,7 +442,7 @@ namespace Secure_Channel_Server
 
         private void write2DB(string s) 
         {
-            if(File.Exists(db) && !userExist(s))
+            if(File.Exists(db))
             {
                 using (StreamWriter writer = File.AppendText(db))
                 {

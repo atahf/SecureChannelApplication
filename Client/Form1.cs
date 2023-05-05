@@ -84,37 +84,48 @@ namespace Secure_Channel_Client
         {
             if (connected)
             {
+                int errorCode = 0;
                 try
                 {
+                    AddEnrollLog("\r\n\r\n" + "hex(Encryption public key) : " + generateHexStringFromString(RSAxmlKey3072_encryption));
+                    AddEnrollLog("\r\n\r\n" + "hex(Sign verification public key) : " + generateHexStringFromString(RSAxmlKey3072_sign));
+
                     string pass = textPass.Text;
                     string user = textUser.Text;
 
                     byte[] hashedPass = hashWithSHA512(pass);
+                    errorCode = 1;
                     string hashedPassS = generateHexStringFromByteArray(hashedPass);
-                    AddEnrollLog("you hashed password in hex format: " + hashedPassS);
+                    AddEnrollLog("\r\n\r\n" + "Hashed password in hex format: " + hashedPassS);
 
                     string enrollMsg = hashedPassS + ":" + user + ":" + channel;
                     byte[] enrollMsgEncrypted = encryptWithRSA(enrollMsg, 3072, RSAxmlKey3072_encryption);
+                    errorCode = 2;
                     string enrollMsgEncryptedHexS = generateHexStringFromByteArray(enrollMsgEncrypted) + '\0';
+                    AddEnrollLog("\r\n\r\n" + "hex(E(hex(H(password)):username:channel)) sent to server: " + enrollMsgEncryptedHexS);
                     byte[] payload = Encoding.ASCII.GetBytes(enrollMsgEncryptedHexS);
 
                     socket.Send(payload);
 
                     Byte[] buffer = new Byte[3072];
                     socket.Receive(buffer);
-
+                    
                     string incomingMessageHexS = Encoding.Default.GetString(buffer);
                     incomingMessageHexS = incomingMessageHexS.Substring(0, incomingMessageHexS.IndexOf("\0"));
 
                     byte[] incomingMessageHex = hexStringToByteArray(incomingMessageHexS);
                     string incomingMessage = Encoding.Default.GetString(incomingMessageHex);
-
+                    AddEnrollLog("\r\n\r\n" + "Received the error/succes message signed by server: " + incomingMessageHexS);
+                    
                     bool verifiedError = verifyWithRSA("error", 3072, RSAxmlKey3072_sign, incomingMessageHex);
                     bool verifiedSuccess = verifyWithRSA("success", 3072, RSAxmlKey3072_sign, incomingMessageHex);
 
+                    errorCode = 3;
+                    
                     if (verifiedError)
                     {
-                        AddEnrollLog("This username is taken, please write a new username!");
+                        AddEnrollLog("\r\n\r\n" + "Sign of the server verified!");
+                        AddEnrollLog("\r\n\r\n" + "This username is taken, please write a new username!");
                         textUser.ReadOnly = false;
                         textUser.Clear();
                         btnEnroll.Enabled = true;
@@ -124,7 +135,8 @@ namespace Secure_Channel_Client
                     }
                     else if (verifiedSuccess)
                     {
-                        AddEnrollLog("You have successfully enrolled to " + channel + " channel, now you can go to Login tab and login with your username and password!");
+                        AddEnrollLog("\r\n\r\n" + "Sign of the server verified!");
+                        AddEnrollLog("\r\n\r\n" + "You have successfully enrolled to " + channel + " channel, now you can go to Login tab and login with your username and password!");
                         btnEnroll.Enabled = true;
                         textUser.ReadOnly = false;
                         textPass.ReadOnly = false;
@@ -143,8 +155,11 @@ namespace Secure_Channel_Client
                 {
                     if (!terminating)
                     {
-                        AddEnrollLog("Connection has lost with the server.");
+                        if (errorCode == 0) AddEnrollLog("\r\n\r\n" + "Server connection or password hash operation failed!");
+                        else if (errorCode == 1) AddEnrollLog("\r\n\r\n" + "Server connection or encryption operation failed!");
+                        else if (errorCode == 2) AddEnrollLog("\r\n\r\n" + "Server connection failed or server's sign could not be verified!");
                     }
+                    
 
                     socket.Close();
                     connected = false;
@@ -206,6 +221,8 @@ namespace Secure_Channel_Client
             {
                 try
                 {
+                    AddLoginLog("\r\n\r\n" + "hex(Encryption public key) : " + generateHexStringFromString(RSAxmlKey3072_encryption));
+                    AddLoginLog("\r\n\r\n" + "hex(Sign verification public key) : " + generateHexStringFromString(RSAxmlKey3072_sign));
                     string pass = textPass2.Text;
                     string user = textUser2.Text;
 
@@ -213,28 +230,39 @@ namespace Secure_Channel_Client
 
                     byte[] lowerQuarter = new byte[16];
                     Array.Copy(hashedPass, 0, lowerQuarter, 0, 16);
+                    AddLoginLog("\r\n\r\n" + "hex(H(password)[:128]): " + generateHexStringFromByteArray(lowerQuarter));
 
                     byte[] AES128key = new byte[16];
                     byte[] AES128IV = new byte[16];
 
-                    Array.Copy(hashedPass, 0, AES128key, 0, 16);
-                    Array.Copy(hashedPass, 16, AES128IV, 0, 16);
+                    Array.Copy(hashedPass, 32, AES128key, 0, 16);
+                    Array.Copy(hashedPass, 48, AES128IV, 0, 16);
+
+                    AddLoginLog("\r\n\r\n" + "hex(H(password)[256:384]) The AES-128 key: " + generateHexStringFromByteArray(AES128key));
+                    AddLoginLog("\r\n\r\n" + "hex(H(password)[384:512]) The AES-128 IV: " + generateHexStringFromByteArray(AES128IV));
 
                     string authReqS = "auth:" + user;
                     byte[] authReq = Encoding.ASCII.GetBytes(authReqS);
                     socket.Send(authReq);
+                    AddLoginLog("\r\n\r\n" + "An authentication request sent to server.");
 
                     Byte[] buffer = new Byte[16];
                     socket.Receive(buffer);
                     string rndNum = Encoding.Default.GetString(buffer);
 
+                    AddLoginLog("\r\n\r\n" + "Received a 128 bit number: " +  generateHexStringFromByteArray(buffer));
+
                     byte[] HMACrndNum = applyHMACwithSHA512(rndNum, lowerQuarter);
                     socket.Send(HMACrndNum);
+
+                    AddLoginLog("\r\n\r\n" + "Applied HMAC to random number used hex(H(password)[:128]) as the key and sent to server: " + generateHexStringFromByteArray(HMACrndNum));
 
                     Byte[] auth_data_buff = new Byte[3072];
                     socket.Receive(auth_data_buff);
 
                     string auth_dataS = Encoding.Default.GetString(auth_data_buff);
+
+                    //AddLoginLog("\r\n\r\n" + "Received message: " + auth_dataS);
 
                     string enc_msg = auth_dataS.Substring(0, auth_dataS.IndexOf(":auth:"));
                     string msg_sign = auth_dataS.Substring(auth_dataS.IndexOf(":auth:") + 6);
@@ -242,11 +270,13 @@ namespace Secure_Channel_Client
                     byte[] sign = hexStringToByteArray(msg_sign);
 
                     bool verif = verifyWithRSA(enc_msg, 3072, RSAxmlKey3072_sign, sign);
+                    AddLoginLog("\r\n\r\n" + "Signed response coming from the server: " + generateHexStringFromByteArray(sign));
 
-                    if(verif)
+                    if (verif)
                     {
+                        AddLoginLog("\r\n\r\n" + "Sign of the server verified!");
                         // since no_user respone will be sent in clear we can first check that
-                        if(enc_msg == "no_user")
+                        if (enc_msg == "no_user")
                         {
                             AddLoginLog("wrong username!");
                         }
@@ -254,6 +284,7 @@ namespace Secure_Channel_Client
                         {
                             byte[] enc_msg_hex = hexStringToByteArray(enc_msg);
                             string enc_res = Encoding.Default.GetString(enc_msg_hex);
+                            AddLoginLog("\r\n\r\n" + "The hex version of message encrypted by AES-128: " + enc_msg);
 
                             /* reason of try-catch is because if we fail in decryption of response it 
                              * will mean that user entered his/her password wrong, so in catch block
@@ -264,10 +295,12 @@ namespace Secure_Channel_Client
                                 byte[] enc_suc = decryptWithAES128(enc_res, AES128key, AES128IV);
                                 string response = Encoding.Default.GetString(enc_suc);
 
-                                AddLoginLog(response);
+                                AddLoginLog("\r\n\r\n" + "After decryption: " + response);
+
+                                
                                 if (response == "success")
                                 {
-                                    AddLoginLog("You have successfully logged in!");
+                                    AddLoginLog("\r\n\r\n" + "You have successfully logged in!");
                                     loggedIn = true;
 
                                     while (true) { }
@@ -278,7 +311,7 @@ namespace Secure_Channel_Client
                                  */
                                 else if (response == "already")
                                 {
-                                    AddLoginLog("there is already a user online with same username!");
+                                    AddLoginLog("The user already logged in!");
                                 }
                                 else
                                 {
@@ -290,10 +323,10 @@ namespace Secure_Channel_Client
                             }
                             catch
                             {
-                                AddLoginLog("wrong  password, try again!");
+                                AddLoginLog("\r\n\r\n" + "Cannot decrypt the message! Wrong  password, try again!");
 
 
-                                AddEnrollLog("Connected to the server.");
+                                
 
                                 socket.Close();
 
@@ -389,6 +422,12 @@ namespace Secure_Channel_Client
         {
             string hexString = BitConverter.ToString(input);
             return hexString.Replace("-", "");
+        }
+
+        static string generateHexStringFromString(string input)
+        {
+            byte[] bytes = Encoding.ASCII.GetBytes(input);
+            return BitConverter.ToString(bytes).Replace("-", "");
         }
 
         public static byte[] hexStringToByteArray(string hex)
