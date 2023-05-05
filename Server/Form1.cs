@@ -335,12 +335,12 @@ namespace Secure_Channel_Server
                     if (!terminating)
                     {
                         
-                        AddMessage(getClientIp(s.RemoteEndPoint) + " A client disconnected!");
+                        AddMessage("\r\n\r\n" + getClientIp(s.RemoteEndPoint) + " A client disconnected!");
 
                         if (active_users.Contains(user))
                         {
                             active_users.Remove(user);
-                            AddMessage(getClientIp(s.RemoteEndPoint) + " is removed from online users list!");
+                            AddMessage(user + " is removed from online users list!");
                         }
                     }
 

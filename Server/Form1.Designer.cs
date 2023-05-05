@@ -28,7 +28,7 @@
             // 
             this.btnStart.BackColor = System.Drawing.Color.LightGreen;
             this.btnStart.Cursor = System.Windows.Forms.Cursors.Hand;
-            this.btnStart.Location = new System.Drawing.Point(185, 12);
+            this.btnStart.Location = new System.Drawing.Point(694, 17);
             this.btnStart.Name = "btnStart";
             this.btnStart.Size = new System.Drawing.Size(75, 29);
             this.btnStart.TabIndex = 0;
@@ -41,7 +41,7 @@
             this.btnStop.BackColor = System.Drawing.Color.Red;
             this.btnStop.Cursor = System.Windows.Forms.Cursors.Hand;
             this.btnStop.Enabled = false;
-            this.btnStop.Location = new System.Drawing.Point(266, 12);
+            this.btnStop.Location = new System.Drawing.Point(810, 17);
             this.btnStop.Name = "btnStop";
             this.btnStop.Size = new System.Drawing.Size(75, 29);
             this.btnStop.TabIndex = 0;
@@ -51,7 +51,7 @@
             // 
             // txtPort
             // 
-            this.txtPort.Location = new System.Drawing.Point(82, 17);
+            this.txtPort.Location = new System.Drawing.Point(430, 22);
             this.txtPort.Name = "txtPort";
             this.txtPort.Size = new System.Drawing.Size(61, 20);
             this.txtPort.TabIndex = 1;
@@ -59,7 +59,7 @@
             // label1
             // 
             this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(9, 20);
+            this.label1.Location = new System.Drawing.Point(357, 25);
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(67, 13);
             this.label1.TabIndex = 2;
@@ -67,12 +67,12 @@
             // 
             // txtOutput
             // 
-            this.txtOutput.Location = new System.Drawing.Point(12, 47);
+            this.txtOutput.Location = new System.Drawing.Point(12, 61);
             this.txtOutput.Multiline = true;
             this.txtOutput.Name = "txtOutput";
             this.txtOutput.ReadOnly = true;
             this.txtOutput.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-            this.txtOutput.Size = new System.Drawing.Size(329, 285);
+            this.txtOutput.Size = new System.Drawing.Size(1084, 492);
             this.txtOutput.TabIndex = 2;
             // 
             // Form1
@@ -80,7 +80,7 @@
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.SystemColors.ActiveCaption;
-            this.ClientSize = new System.Drawing.Size(353, 344);
+            this.ClientSize = new System.Drawing.Size(1108, 565);
             this.Controls.Add(this.txtOutput);
             this.Controls.Add(this.btnStop);
             this.Controls.Add(this.btnStart);
@@ -93,6 +93,7 @@
             this.Text = "Secure Channel Server";
             this.ResumeLayout(false);
             this.PerformLayout();
+
         }
 
         #endregion

@@ -186,12 +186,7 @@ namespace Secure_Channel_Client
                     try
                     {
                         socket.Connect(ip, port_num);
-                        btnLogin.Enabled = false;
-                        disconnectButton.Enabled = true;
-                        textUser2.ReadOnly = true;
-                        textPass2.ReadOnly = true;
-                        textServerIP2.ReadOnly = true;
-                        textServerPort2.ReadOnly = true;
+                        
                         connected = true;
                         AddEnrollLog("Connected to the server.");
 
@@ -307,6 +302,13 @@ namespace Secure_Channel_Client
 
                                     Thread receive = new Thread(Receive);
                                     receive.Start();
+
+                                    btnLogin.Enabled = false;
+                                    disconnectButton.Enabled = true;
+                                    textUser2.ReadOnly = true;
+                                    textPass2.ReadOnly = true;
+                                    textServerIP2.ReadOnly = true;
+                                    textServerPort2.ReadOnly = true;
 
                                 }
 
