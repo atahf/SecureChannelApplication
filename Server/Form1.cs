@@ -162,7 +162,12 @@ namespace Secure_Channel_Server
                 {
                     if (loggedIn)
                     {
-                        // waiting for step 2 of project!
+                        while (loggedIn)
+                        {
+                            Byte[] buffer = new Byte[3072];
+                            s.Receive(buffer);
+                        }
+                        
                     }
                     else
                     {
@@ -212,7 +217,7 @@ namespace Secure_Channel_Server
                             {
                                 response = "no_user";
 
-                                AddMessage("\r\n\r\n" + getClientIp(s.RemoteEndPoint) + " There is no enrolled user with name " + user +"!");
+                                AddMessage("\r\n\r\n" + getClientIp(s.RemoteEndPoint) + " There is no enrolled user with name " + user +"! So that HMAC verification skipped, and response sent!");
                             }
                             else
                             {
@@ -233,7 +238,7 @@ namespace Secure_Channel_Server
                                     {
                                         response = "success";
 
-                                        AddMessage("\r\n\r\n" + getClientIp(s.RemoteEndPoint) +"  " + user +" is successfully logged in!");
+                                        AddMessage("\r\n\r\n" + getClientIp(s.RemoteEndPoint) +"  " + user +" is successfully authenticated!");
                                         active_users.Add(user);
                                         loggedIn = true;
                                     }
@@ -325,12 +330,12 @@ namespace Secure_Channel_Server
                         }
                     }
                 }
-                catch (Exception ex)
+                catch 
                 {
                     if (!terminating)
                     {
-                        AddMessage(getClientIp(s.RemoteEndPoint) + ": Error " + ex.Message);
-                        AddMessage(getClientIp(s.RemoteEndPoint) + " disconnected!");
+                        
+                        AddMessage(getClientIp(s.RemoteEndPoint) + " A client disconnected!");
 
                         if (active_users.Contains(user))
                         {
@@ -339,8 +344,12 @@ namespace Secure_Channel_Server
                         }
                     }
 
+
                     s.Close();
                     socketList.Remove(s);
+                    
+                    
+                    
                     connected = false;
                 }
             }

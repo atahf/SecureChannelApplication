@@ -56,7 +56,7 @@ namespace Secure_Channel_Client
                 try
                 {
                     socket.Connect(ip, port_num);
-                    btnEnroll.Enabled = false;
+                    btnEnroll.Enabled = true;
                     textUser.ReadOnly = true;
                     textPass.ReadOnly = true;
                     textServerIP.ReadOnly = true;
@@ -169,37 +169,35 @@ namespace Secure_Channel_Client
 
         private void btnLogin_Click(object sender, EventArgs e)
         {
-            if (loggedIn)
-            {
-                socket.Close();
-                loggedIn = false;
-                connected = false;
-                btnLogin.Text = "Login";
-                btnLogin.BackColor = Color.LightGreen;
-            }
+            
+            
+            socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+            string ip = textServerIP2.Text;
+            string portNum = textServerPort2.Text;
+            if (ip == "") AddLoginLog("IP cannot be empty!");
+            else if (portNum == "") AddLoginLog("Port field cannot be empty!");
+            else if (textPass2.Text == "") AddLoginLog("Password cannot be empty!");
+            else if (textUser2.Text == "") AddLoginLog("Username cannot be empty!");
             else
             {
-                socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-                string ip = textServerIP2.Text;
-                string portNum = textServerPort2.Text;
                 int port_num;
                 if (Int32.TryParse(portNum, out port_num))
                 {
                     try
                     {
                         socket.Connect(ip, port_num);
-                        btnEnroll.Enabled = false;
-                        textUser.ReadOnly = true;
-                        textPass.ReadOnly = true;
-                        textServerIP.ReadOnly = true;
-                        textServerPort.ReadOnly = true;
+                        btnLogin.Enabled = false;
+                        disconnectButton.Enabled = true;
+                        textUser2.ReadOnly = true;
+                        textPass2.ReadOnly = true;
+                        textServerIP2.ReadOnly = true;
+                        textServerPort2.ReadOnly = true;
                         connected = true;
                         AddEnrollLog("Connected to the server.");
 
                         Thread receiveThread = new Thread(new ThreadStart(Login));
                         receiveThread.Start();
-                        btnLogin.Text = "Disconnect";
-                        btnLogin.BackColor = Color.Red;
+
                     }
                     catch
                     {
@@ -212,6 +210,8 @@ namespace Secure_Channel_Client
                     AddEnrollLog("Check the port number.");
                 }
             }
+            
+            
         }
 
         // Login Phase
@@ -305,7 +305,9 @@ namespace Secure_Channel_Client
                                     AddLoginLog("\r\n\r\n" + "You have successfully logged in!");
                                     loggedIn = true;
 
-                                    while (true) { }
+                                    Thread receive = new Thread(Receive);
+                                    receive.Start();
+
                                 }
 
                                 /* if decrypted message is "already" it means that there is anothere user 
@@ -359,6 +361,34 @@ namespace Secure_Channel_Client
 
                     socket.Close();
                     connected = false;
+                }
+            }
+        }
+
+        private void Receive(object obj)
+        {
+            while (connected)
+            {
+                try
+                {
+                    Byte[] buffer = new Byte[16];
+                    socket.Receive(buffer);
+                }
+                catch
+                {
+                    if (!terminating && connected)
+                    {
+                        AddLoginLog("The server has disconnected!");
+                       
+                    }
+                    connected = false;
+                    disconnectButton.Enabled = false;
+                    btnLogin.Enabled = true;
+                    textUser2.ReadOnly = false;
+                    textPass2.ReadOnly = false;
+                    textServerIP2.ReadOnly = false;
+                    textServerPort2.ReadOnly = false;
+
                 }
             }
         }
@@ -586,6 +616,20 @@ namespace Secure_Channel_Client
             }
 
             return result;
+        }
+
+        private void disconnectButton_Click(object sender, EventArgs e)
+        {
+            socket.Close();
+            loggedIn = false;
+            connected = false;
+            disconnectButton.Enabled = false;
+            btnLogin.Enabled = true;
+            textUser2.ReadOnly = false;
+            textPass2.ReadOnly = false;
+            textServerIP2.ReadOnly = false;
+            textServerPort2.ReadOnly = false;
+            AddLoginLog("You are disconnected from the server!");
         }
     }
 }

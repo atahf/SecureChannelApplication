@@ -44,6 +44,7 @@
             this.lblServerIP2 = new System.Windows.Forms.Label();
             this.lblPass2 = new System.Windows.Forms.Label();
             this.lblUser2 = new System.Windows.Forms.Label();
+            this.disconnectButton = new System.Windows.Forms.Button();
             this.tabControl.SuspendLayout();
             this.tabEnroll.SuspendLayout();
             this.tabLogin.SuspendLayout();
@@ -56,7 +57,7 @@
             this.tabControl.Location = new System.Drawing.Point(12, 12);
             this.tabControl.Name = "tabControl";
             this.tabControl.SelectedIndex = 0;
-            this.tabControl.Size = new System.Drawing.Size(405, 458);
+            this.tabControl.Size = new System.Drawing.Size(1216, 577);
             this.tabControl.TabIndex = 0;
             // 
             // tabEnroll
@@ -78,14 +79,14 @@
             this.tabEnroll.Location = new System.Drawing.Point(4, 22);
             this.tabEnroll.Name = "tabEnroll";
             this.tabEnroll.Padding = new System.Windows.Forms.Padding(3);
-            this.tabEnroll.Size = new System.Drawing.Size(397, 432);
+            this.tabEnroll.Size = new System.Drawing.Size(1208, 551);
             this.tabEnroll.TabIndex = 0;
             this.tabEnroll.Text = "Enroll";
             this.tabEnroll.UseVisualStyleBackColor = true;
             // 
             // btnEnroll
             // 
-            this.btnEnroll.Location = new System.Drawing.Point(158, 403);
+            this.btnEnroll.Location = new System.Drawing.Point(157, 295);
             this.btnEnroll.Name = "btnEnroll";
             this.btnEnroll.Size = new System.Drawing.Size(75, 23);
             this.btnEnroll.TabIndex = 13;
@@ -140,12 +141,12 @@
             // 
             // textEnrollLog
             // 
-            this.textEnrollLog.Location = new System.Drawing.Point(20, 195);
+            this.textEnrollLog.Location = new System.Drawing.Point(433, 23);
             this.textEnrollLog.Multiline = true;
             this.textEnrollLog.Name = "textEnrollLog";
             this.textEnrollLog.ReadOnly = true;
             this.textEnrollLog.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-            this.textEnrollLog.Size = new System.Drawing.Size(356, 202);
+            this.textEnrollLog.Size = new System.Drawing.Size(769, 522);
             this.textEnrollLog.TabIndex = 8;
             // 
             // textServerPort
@@ -166,6 +167,7 @@
             // 
             this.textPass.Location = new System.Drawing.Point(78, 77);
             this.textPass.Name = "textPass";
+            this.textPass.PasswordChar = '*';
             this.textPass.Size = new System.Drawing.Size(100, 20);
             this.textPass.TabIndex = 5;
             // 
@@ -214,6 +216,7 @@
             // 
             // tabLogin
             // 
+            this.tabLogin.Controls.Add(this.disconnectButton);
             this.tabLogin.Controls.Add(this.btnLogin);
             this.tabLogin.Controls.Add(this.textLoginLog);
             this.tabLogin.Controls.Add(this.textServerPort2);
@@ -227,7 +230,7 @@
             this.tabLogin.Location = new System.Drawing.Point(4, 22);
             this.tabLogin.Name = "tabLogin";
             this.tabLogin.Padding = new System.Windows.Forms.Padding(3);
-            this.tabLogin.Size = new System.Drawing.Size(397, 432);
+            this.tabLogin.Size = new System.Drawing.Size(1208, 551);
             this.tabLogin.TabIndex = 1;
             this.tabLogin.Text = "Login";
             this.tabLogin.UseVisualStyleBackColor = true;
@@ -236,7 +239,7 @@
             // 
             this.btnLogin.BackColor = System.Drawing.Color.LightGreen;
             this.btnLogin.Cursor = System.Windows.Forms.Cursors.Hand;
-            this.btnLogin.Location = new System.Drawing.Point(155, 390);
+            this.btnLogin.Location = new System.Drawing.Point(87, 390);
             this.btnLogin.Name = "btnLogin";
             this.btnLogin.Size = new System.Drawing.Size(90, 36);
             this.btnLogin.TabIndex = 19;
@@ -246,12 +249,12 @@
             // 
             // textLoginLog
             // 
-            this.textLoginLog.Location = new System.Drawing.Point(29, 143);
+            this.textLoginLog.Location = new System.Drawing.Point(393, 22);
             this.textLoginLog.Multiline = true;
             this.textLoginLog.Name = "textLoginLog";
             this.textLoginLog.ReadOnly = true;
             this.textLoginLog.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-            this.textLoginLog.Size = new System.Drawing.Size(341, 241);
+            this.textLoginLog.Size = new System.Drawing.Size(809, 526);
             this.textLoginLog.TabIndex = 17;
             // 
             // textServerPort2
@@ -272,6 +275,7 @@
             // 
             this.textPass2.Location = new System.Drawing.Point(87, 96);
             this.textPass2.Name = "textPass2";
+            this.textPass2.PasswordChar = '*';
             this.textPass2.Size = new System.Drawing.Size(100, 20);
             this.textPass2.TabIndex = 14;
             // 
@@ -318,12 +322,23 @@
             this.lblUser2.TabIndex = 9;
             this.lblUser2.Text = "Username";
             // 
+            // disconnectButton
+            // 
+            this.disconnectButton.Enabled = false;
+            this.disconnectButton.Location = new System.Drawing.Point(221, 397);
+            this.disconnectButton.Name = "disconnectButton";
+            this.disconnectButton.Size = new System.Drawing.Size(75, 23);
+            this.disconnectButton.TabIndex = 20;
+            this.disconnectButton.Text = "disconnect";
+            this.disconnectButton.UseVisualStyleBackColor = true;
+            this.disconnectButton.Click += new System.EventHandler(this.disconnectButton_Click);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.SystemColors.ActiveCaption;
-            this.ClientSize = new System.Drawing.Size(429, 482);
+            this.ClientSize = new System.Drawing.Size(1240, 601);
             this.Controls.Add(this.tabControl);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
             this.Margin = new System.Windows.Forms.Padding(4);
@@ -368,5 +383,6 @@
         private System.Windows.Forms.Label lblServerIP2;
         private System.Windows.Forms.Label lblPass2;
         private System.Windows.Forms.Label lblUser2;
+        private System.Windows.Forms.Button disconnectButton;
     }
 }
