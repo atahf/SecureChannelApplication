@@ -51,31 +51,35 @@ namespace Secure_Channel_Client
             string ip = textServerIP.Text;
             string portNum = textServerPort.Text;
             int port_num;
-            if (Int32.TryParse(portNum, out port_num))
-            {
-                try
-                {
-                    socket.Connect(ip, port_num);
-                    btnEnroll.Enabled = true;
-                    textUser.ReadOnly = true;
-                    textPass.ReadOnly = true;
-                    textServerIP.ReadOnly = true;
-                    textServerPort.ReadOnly = true;
-                    connected = true;
-                    AddEnrollLog("Connected to the server.");
-
-                    Thread receiveThread = new Thread(new ThreadStart(Enroll));
-                    receiveThread.Start();
-                }
-                catch
-                {
-                    AddEnrollLog("Could not connect to the server.");
-                }
-
-            }
+            if (ip == "") AddEnrollLog("IP cannot be empty!");
+            else if (portNum == "") AddEnrollLog("Port field cannot be empty!");
+            else if (textPass.Text == "") AddEnrollLog("Password cannot be empty!");
+            else if (textUser.Text == "") AddEnrollLog("Username cannot be empty!");
             else
             {
-                AddEnrollLog("Check the port number.");
+                if (Int32.TryParse(portNum, out port_num))
+                {
+                    try
+                    {
+                        socket.Connect(ip, port_num);
+                        
+                        
+                        connected = true;
+                        AddEnrollLog("Connected to the server.");
+
+                        Thread receiveThread = new Thread(new ThreadStart(Enroll));
+                        receiveThread.Start();
+                    }
+                    catch
+                    {
+                        AddEnrollLog("Could not connect to the server.");
+                    }
+
+                }
+                else
+                {
+                    AddEnrollLog("Check the port number.");
+                }
             }
         }
 
@@ -188,7 +192,7 @@ namespace Secure_Channel_Client
                         socket.Connect(ip, port_num);
                         
                         connected = true;
-                        AddEnrollLog("Connected to the server.");
+                        AddLoginLog("Connected to the server.");
 
                         Thread receiveThread = new Thread(new ThreadStart(Login));
                         receiveThread.Start();
@@ -196,13 +200,13 @@ namespace Secure_Channel_Client
                     }
                     catch
                     {
-                        AddEnrollLog("Could not connect to the server.");
+                        AddLoginLog("Could not connect to the server.");
                     }
 
                 }
                 else
                 {
-                    AddEnrollLog("Check the port number.");
+                    AddLoginLog("Check the port number.");
                 }
             }
             
