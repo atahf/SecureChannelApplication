@@ -34,6 +34,7 @@
             this.lblPass = new System.Windows.Forms.Label();
             this.lblUser = new System.Windows.Forms.Label();
             this.tabLogin = new System.Windows.Forms.TabPage();
+            this.disconnectButton = new System.Windows.Forms.Button();
             this.btnLogin = new System.Windows.Forms.Button();
             this.textLoginLog = new System.Windows.Forms.TextBox();
             this.textServerPort2 = new System.Windows.Forms.TextBox();
@@ -44,7 +45,6 @@
             this.lblServerIP2 = new System.Windows.Forms.Label();
             this.lblPass2 = new System.Windows.Forms.Label();
             this.lblUser2 = new System.Windows.Forms.Label();
-            this.disconnectButton = new System.Windows.Forms.Button();
             this.tabControl.SuspendLayout();
             this.tabEnroll.SuspendLayout();
             this.tabLogin.SuspendLayout();
@@ -235,6 +235,19 @@
             this.tabLogin.Text = "Login";
             this.tabLogin.UseVisualStyleBackColor = true;
             // 
+            // disconnectButton
+            // 
+            this.disconnectButton.BackColor = System.Drawing.Color.Red;
+            this.disconnectButton.Cursor = System.Windows.Forms.Cursors.Hand;
+            this.disconnectButton.Enabled = false;
+            this.disconnectButton.Location = new System.Drawing.Point(207, 390);
+            this.disconnectButton.Name = "disconnectButton";
+            this.disconnectButton.Size = new System.Drawing.Size(90, 36);
+            this.disconnectButton.TabIndex = 20;
+            this.disconnectButton.Text = "disconnect";
+            this.disconnectButton.UseVisualStyleBackColor = false;
+            this.disconnectButton.Click += new System.EventHandler(this.disconnectButton_Click);
+            // 
             // btnLogin
             // 
             this.btnLogin.BackColor = System.Drawing.Color.LightGreen;
@@ -321,17 +334,6 @@
             this.lblUser2.Size = new System.Drawing.Size(55, 13);
             this.lblUser2.TabIndex = 9;
             this.lblUser2.Text = "Username";
-            // 
-            // disconnectButton
-            // 
-            this.disconnectButton.Enabled = false;
-            this.disconnectButton.Location = new System.Drawing.Point(221, 397);
-            this.disconnectButton.Name = "disconnectButton";
-            this.disconnectButton.Size = new System.Drawing.Size(75, 23);
-            this.disconnectButton.TabIndex = 20;
-            this.disconnectButton.Text = "disconnect";
-            this.disconnectButton.UseVisualStyleBackColor = true;
-            this.disconnectButton.Click += new System.EventHandler(this.disconnectButton_Click);
             // 
             // Form1
             // 
