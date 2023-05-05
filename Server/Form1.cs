@@ -212,7 +212,7 @@ namespace Secure_Channel_Server
                             {
                                 response = "no_user";
 
-                                AddMessage("\r\n\r\n" + getClientIp(s.RemoteEndPoint) + " there is no such user enrolled!");
+                                AddMessage("\r\n\r\n" + getClientIp(s.RemoteEndPoint) + " There is no enrolled user with name " + user +"!");
                             }
                             else
                             {
@@ -227,13 +227,13 @@ namespace Secure_Channel_Server
                                     {
                                         response = "already";
 
-                                        AddMessage("\r\n\r\n" + getClientIp(s.RemoteEndPoint) + " there is already a user online with same username!");
+                                        AddMessage("\r\n\r\n" + getClientIp(s.RemoteEndPoint) + " There is already a user online with the username " + user + "!");
                                     }
                                     else
                                     {
                                         response = "success";
 
-                                        AddMessage("\r\n\r\n" + getClientIp(s.RemoteEndPoint) + " is successfully logged in!");
+                                        AddMessage("\r\n\r\n" + getClientIp(s.RemoteEndPoint) +"  " + user +" is successfully logged in!");
                                         active_users.Add(user);
                                         loggedIn = true;
                                     }
@@ -242,7 +242,7 @@ namespace Secure_Channel_Server
                                 {
                                     response = "error";
 
-                                    AddMessage("\r\n\r\n" + getClientIp(s.RemoteEndPoint) +": " +user +" failed to log in due to wrong password!");
+                                    AddMessage("\r\n\r\n" + getClientIp(s.RemoteEndPoint) +"  " +user +" failed to log in due to wrong password!");
                                 }
 
                                 byte[] AES128key = hexStringToByteArray(pass.Substring(64, 32));

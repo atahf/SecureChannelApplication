@@ -238,8 +238,7 @@ namespace Secure_Channel_Client
                     Array.Copy(hashedPass, 32, AES128key, 0, 16);
                     Array.Copy(hashedPass, 48, AES128IV, 0, 16);
 
-                    AddLoginLog("\r\n\r\n" + "hex(H(password)[256:384]) The AES-128 key: " + generateHexStringFromByteArray(AES128key));
-                    AddLoginLog("\r\n\r\n" + "hex(H(password)[384:512]) The AES-128 IV: " + generateHexStringFromByteArray(AES128IV));
+                    
 
                     string authReqS = "auth:" + user;
                     byte[] authReq = Encoding.ASCII.GetBytes(authReqS);
@@ -295,6 +294,9 @@ namespace Secure_Channel_Client
                                 byte[] enc_suc = decryptWithAES128(enc_res, AES128key, AES128IV);
                                 string response = Encoding.Default.GetString(enc_suc);
 
+                                AddLoginLog("\r\n\r\n" + "hex(H(password)[256:384]) The AES-128 key: " + generateHexStringFromByteArray(AES128key));
+                                AddLoginLog("\r\n\r\n" + "hex(H(password)[384:512]) The AES-128 IV: " + generateHexStringFromByteArray(AES128IV));
+
                                 AddLoginLog("\r\n\r\n" + "After decryption: " + response);
 
                                 
@@ -323,6 +325,8 @@ namespace Secure_Channel_Client
                             }
                             catch
                             {
+                                AddLoginLog("\r\n\r\n" + "hex(H(password)[256:384]) The AES-128 key: " + generateHexStringFromByteArray(AES128key));
+                                AddLoginLog("\r\n\r\n" + "hex(H(password)[384:512]) The AES-128 IV: " + generateHexStringFromByteArray(AES128IV));
                                 AddLoginLog("\r\n\r\n" + "Cannot decrypt the message! Wrong  password, try again!");
 
 
