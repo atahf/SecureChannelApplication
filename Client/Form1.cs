@@ -23,6 +23,12 @@ namespace Secure_Channel_Client
         private bool loggedIn = false;
         private string channel = "";
 
+        private byte[] sessionKey;
+        private byte[] sessionIV;
+        private byte[] sessionHMACkey;
+
+        private string currentSession;
+
         private string RSAxmlKey3072_encryption;
         private string RSAxmlKey3072_sign;
 
@@ -278,6 +284,10 @@ namespace Secure_Channel_Client
                         {
                             AddLoginLog("wrong username!");
                         }
+                        else if (enc_msg == "not_available")
+                        {
+                            AddLoginLog("\r\n\r\n" + "The channel you are subscribed is currently not available, please try again later!");
+                        }
                         else
                         {
                             byte[] enc_msg_hex = hexStringToByteArray(enc_msg);
@@ -299,10 +309,19 @@ namespace Secure_Channel_Client
                                 AddLoginLog("\r\n\r\n" + "After decryption: " + response);
 
                                 
-                                if (response == "success")
+                                if (response.Substring(0,7) == "success")
                                 {
                                     AddLoginLog("\r\n\r\n" + "You have successfully logged in!");
+                                    string[] elements = response.Split(':');
+                                    sessionKey = hexStringToByteArray(elements[1]);
+                                    sessionIV = hexStringToByteArray(elements[2]);
+                                    sessionHMACkey = hexStringToByteArray(elements[3]);
+                                    currentSession = elements[4];
                                     loggedIn = true;
+
+                                    AddLoginLog("\r\n\r\n" + "Received AES128 key for channel communication is: " + elements[1]);
+                                    AddLoginLog("\r\n" + "Received AES128 IV for channel communication is: " + elements[2]);
+                                    AddLoginLog("\r\n" + "Received HMAC key for channel communication is: " + elements[3]);
 
                                     Thread receive = new Thread(Receive);
                                     receive.Start();
@@ -313,6 +332,11 @@ namespace Secure_Channel_Client
                                     textPass2.ReadOnly = true;
                                     textServerIP2.ReadOnly = true;
                                     textServerPort2.ReadOnly = true;
+                                    sendMessageBtn.Enabled = true;
+                                    messageTbs.Enabled = true;
+                                    generalChannel.Enabled = true;
+
+                                    generalChannel.AppendText("You are authenticated " + user + "! You are subscribed to " + currentSession + ". You will see your channel communication here!");
 
                                 }
 
@@ -377,26 +401,90 @@ namespace Secure_Channel_Client
             {
                 try
                 {
-                    Byte[] buffer = new Byte[16];
+                    Byte[] buffer = new Byte[3072];
                     socket.Receive(buffer);
+                    // Server bir mesaj broadcast etti hmaci onayla decrypt et, mesajı loga bastır.
+                   
+                    string [] incoming_message = Encoding.ASCII.GetString(buffer).Trim('\0').Split(':');
+                    string encryptedMessage = incoming_message[0];
+                    string incomingHmac = incoming_message[1];
+                    AddLoginLog("\r\n\r\n" + "An encrypted message received: " + Encoding.ASCII.GetString(buffer).Trim('\0'));
+
+                    byte[] hmacVerification = applyHMACwithSHA512(encryptedMessage,sessionHMACkey);
+                    //byte[] original = hexStringToByteArray(incomingHmac);
+                    string stringVerification = generateHexStringFromByteArray(hmacVerification);
+                    
+                    if (stringVerification != incomingHmac)
+                    {
+                        generalChannel.AppendText("\r\n\r\n" +"HMAC could not be verified!");
+                        
+                    }
+                    else
+                    {
+                        AddLoginLog("\r\n\r\n" + "HMAC verified!");
+                        
+                        
+                        byte[] decryptedMessage = decryptWithAES128(Encoding.Default.GetString(hexStringToByteArray(encryptedMessage)), sessionKey, sessionIV);
+                        string decryptedString = Encoding.Default.GetString(decryptedMessage);
+
+                        AddLoginLog("\r\n\r\n" + "Decryption succeed!");
+
+                        string[] components = decryptedString.Split(':');
+                        generalChannel.AppendText("\r\n\r\n" + components[1] + ": " + components[2]);
+
+                    }
+
+                    
+
+
+
+
+
                 }
-                catch
+                catch 
                 {
+                    
                     if (!terminating && connected)
                     {
                         AddLoginLog("The server has disconnected!");
                        
                     }
                     connected = false;
+                    loggedIn = false;
                     disconnectButton.Enabled = false;
                     btnLogin.Enabled = true;
                     textUser2.ReadOnly = false;
                     textPass2.ReadOnly = false;
                     textServerIP2.ReadOnly = false;
                     textServerPort2.ReadOnly = false;
+                    sendMessageBtn.Enabled = false;
+                    messageTbs.Enabled = false;
+                    generalChannel.Clear();
+                    generalChannel.Enabled = false;
 
                 }
             }
+        }
+
+        private void sendMessageBtn_Click(object sender, EventArgs e)
+        {
+            if (messageTbs.Text == "")
+            {
+                AddLoginLog("\r\n\r\n" + "You must write something first!");
+                return;
+            }
+
+            string messageConcatanated = "msg:" + textUser2.Text + ":" + messageTbs.Text;
+            byte[] encryptedMessage = encryptWithAES128(messageConcatanated, sessionKey, sessionIV);
+            string hexEncryptedMessage = generateHexStringFromByteArray(encryptedMessage);
+            byte[] hmacMessage = applyHMACwithSHA512(hexEncryptedMessage, sessionHMACkey);
+            string hexHMACmessage = generateHexStringFromByteArray(hmacMessage);
+            string concatenatedVersion = hexEncryptedMessage + ":" + hexHMACmessage;
+            byte[] messageToBeSent = Encoding.ASCII.GetBytes(concatenatedVersion);
+            socket.Send(messageToBeSent);
+            AddLoginLog("\r\n\r\n" + "Encrypted message concataned with its hmac: " + concatenatedVersion);
+
+
         }
 
         private void AddEnrollLog(string message)
@@ -635,7 +723,14 @@ namespace Secure_Channel_Client
             textPass2.ReadOnly = false;
             textServerIP2.ReadOnly = false;
             textServerPort2.ReadOnly = false;
+            sendMessageBtn.Enabled = false;
+            messageTbs.Enabled = false;
+            generalChannel.Clear();
+            generalChannel.Enabled = false;
             AddLoginLog("You are disconnected from the server!");
+            
         }
+
+        
     }
 }

@@ -45,6 +45,10 @@
             this.lblServerIP2 = new System.Windows.Forms.Label();
             this.lblPass2 = new System.Windows.Forms.Label();
             this.lblUser2 = new System.Windows.Forms.Label();
+            this.generalChannel = new System.Windows.Forms.RichTextBox();
+            this.messageTbs = new System.Windows.Forms.TextBox();
+            this.sendMessageBtn = new System.Windows.Forms.Button();
+            this.label4 = new System.Windows.Forms.Label();
             this.tabControl.SuspendLayout();
             this.tabEnroll.SuspendLayout();
             this.tabLogin.SuspendLayout();
@@ -57,7 +61,7 @@
             this.tabControl.Location = new System.Drawing.Point(12, 12);
             this.tabControl.Name = "tabControl";
             this.tabControl.SelectedIndex = 0;
-            this.tabControl.Size = new System.Drawing.Size(1216, 577);
+            this.tabControl.Size = new System.Drawing.Size(1215, 951);
             this.tabControl.TabIndex = 0;
             // 
             // tabEnroll
@@ -79,7 +83,7 @@
             this.tabEnroll.Location = new System.Drawing.Point(4, 22);
             this.tabEnroll.Name = "tabEnroll";
             this.tabEnroll.Padding = new System.Windows.Forms.Padding(3);
-            this.tabEnroll.Size = new System.Drawing.Size(1208, 551);
+            this.tabEnroll.Size = new System.Drawing.Size(1207, 925);
             this.tabEnroll.TabIndex = 0;
             this.tabEnroll.Text = "Enroll";
             this.tabEnroll.UseVisualStyleBackColor = true;
@@ -216,12 +220,16 @@
             // 
             // tabLogin
             // 
+            this.tabLogin.Controls.Add(this.label4);
+            this.tabLogin.Controls.Add(this.sendMessageBtn);
             this.tabLogin.Controls.Add(this.disconnectButton);
+            this.tabLogin.Controls.Add(this.messageTbs);
             this.tabLogin.Controls.Add(this.btnLogin);
             this.tabLogin.Controls.Add(this.textLoginLog);
             this.tabLogin.Controls.Add(this.textServerPort2);
             this.tabLogin.Controls.Add(this.textServerIP2);
             this.tabLogin.Controls.Add(this.textPass2);
+            this.tabLogin.Controls.Add(this.generalChannel);
             this.tabLogin.Controls.Add(this.textUser2);
             this.tabLogin.Controls.Add(this.lblServerPort2);
             this.tabLogin.Controls.Add(this.lblServerIP2);
@@ -230,7 +238,7 @@
             this.tabLogin.Location = new System.Drawing.Point(4, 22);
             this.tabLogin.Name = "tabLogin";
             this.tabLogin.Padding = new System.Windows.Forms.Padding(3);
-            this.tabLogin.Size = new System.Drawing.Size(1208, 551);
+            this.tabLogin.Size = new System.Drawing.Size(1207, 925);
             this.tabLogin.TabIndex = 1;
             this.tabLogin.Text = "Login";
             this.tabLogin.UseVisualStyleBackColor = true;
@@ -335,12 +343,52 @@
             this.lblUser2.TabIndex = 9;
             this.lblUser2.Text = "Username";
             // 
+            // generalChannel
+            // 
+            this.generalChannel.BackColor = System.Drawing.SystemColors.ControlDark;
+            this.generalChannel.Enabled = false;
+            this.generalChannel.ForeColor = System.Drawing.SystemColors.WindowText;
+            this.generalChannel.Location = new System.Drawing.Point(393, 572);
+            this.generalChannel.Name = "generalChannel";
+            this.generalChannel.Size = new System.Drawing.Size(809, 346);
+            this.generalChannel.TabIndex = 2;
+            this.generalChannel.Text = "";
+            // 
+            // messageTbs
+            // 
+            this.messageTbs.Enabled = false;
+            this.messageTbs.Location = new System.Drawing.Point(33, 621);
+            this.messageTbs.Multiline = true;
+            this.messageTbs.Name = "messageTbs";
+            this.messageTbs.Size = new System.Drawing.Size(337, 147);
+            this.messageTbs.TabIndex = 7;
+            // 
+            // sendMessageBtn
+            // 
+            this.sendMessageBtn.Enabled = false;
+            this.sendMessageBtn.Location = new System.Drawing.Point(98, 790);
+            this.sendMessageBtn.Name = "sendMessageBtn";
+            this.sendMessageBtn.Size = new System.Drawing.Size(182, 36);
+            this.sendMessageBtn.TabIndex = 8;
+            this.sendMessageBtn.Text = "Send";
+            this.sendMessageBtn.UseVisualStyleBackColor = true;
+            this.sendMessageBtn.Click += new System.EventHandler(this.sendMessageBtn_Click);
+            // 
+            // label4
+            // 
+            this.label4.AutoSize = true;
+            this.label4.Location = new System.Drawing.Point(152, 605);
+            this.label4.Name = "label4";
+            this.label4.Size = new System.Drawing.Size(87, 13);
+            this.label4.TabIndex = 21;
+            this.label4.Text = "Send a Message";
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.SystemColors.ActiveCaption;
-            this.ClientSize = new System.Drawing.Size(1240, 601);
+            this.ClientSize = new System.Drawing.Size(1226, 964);
             this.Controls.Add(this.tabControl);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
             this.Margin = new System.Windows.Forms.Padding(4);
@@ -386,5 +434,9 @@
         private System.Windows.Forms.Label lblPass2;
         private System.Windows.Forms.Label lblUser2;
         private System.Windows.Forms.Button disconnectButton;
+        private System.Windows.Forms.RichTextBox generalChannel;
+        private System.Windows.Forms.TextBox messageTbs;
+        private System.Windows.Forms.Button sendMessageBtn;
+        private System.Windows.Forms.Label label4;
     }
 }

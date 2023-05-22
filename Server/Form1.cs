@@ -29,6 +29,18 @@ namespace Secure_Channel_Server
         private string RSAxmlKey3072_enc_dec;
         private string RSAxmlKey3072_sign_verif;
 
+        private byte[] mathKey;
+        private byte[] mathIV;
+        private byte[] mathHMACkey;
+
+        private byte[] ifKey;
+        private byte[] ifIV;
+        private byte[] ifHMACkey;
+
+        private byte[] spsKey;
+        private byte[] spsIV;
+        private byte[] spsHMACkey;
+
         private string db = "../../db.txt";
 
         private string serverIp;
@@ -149,11 +161,97 @@ namespace Secure_Channel_Server
             }
         }
 
+        private void mathKeyGenBtn_Click(object sender, EventArgs e)
+        {
+            string secretKey = mathSecretKey.Text;
+
+            if (secretKey == "")
+            {
+                AddMessage("\r\n\r\n" + "The secret key for MATH101 channel cannot be empty!");
+                return;
+            }
+
+            byte[] hashedKey = hashWithSHA512(secretKey);
+            string hexKey = generateHexStringFromByteArray(hashedKey);
+            mathKey = hexStringToByteArray(hexKey.Substring(0, 32));
+            mathIV = hexStringToByteArray(hexKey.Substring(32, 32));
+            mathHMACkey = hexStringToByteArray(hexKey.Substring(64, 32));
+
+            AddMessage("\r\n\r\n" + "The AES128 Key for MATH101 channel: " + hexKey.Substring(0, 32));
+            AddMessage("\r\n" + "The AES128 IV for MATH101 channel: " + hexKey.Substring(32, 32));
+            AddMessage("\r\n" + "The HMAC Key for MATH101 channel: " + hexKey.Substring(64, 32));
+
+            mathKeyGenBtn.Enabled = false;
+            mathSecretKey.Enabled = false;
+
+        }
+
+        private void spsKeyGenBtn_Click(object sender, EventArgs e)
+        {
+            string secretKey = spsSecretKey.Text;
+
+            if (secretKey == "")
+            {
+                AddMessage("\r\n\r\n" + "The secret key for SPS101 channel cannot be empty!");
+                return;
+            }
+
+            byte[] hashedKey = hashWithSHA512(secretKey);
+            string hexKey = generateHexStringFromByteArray(hashedKey);
+            spsKey = hexStringToByteArray(hexKey.Substring(0, 32));
+            spsIV = hexStringToByteArray(hexKey.Substring(32, 32));
+            spsHMACkey = hexStringToByteArray(hexKey.Substring(64, 32));
+
+            AddMessage("\r\n\r\n" + "The AES128 Key for SPS101 channel: " + hexKey.Substring(0, 32));
+            AddMessage("\r\n" + "The AES128 IV for SPS101 channel: " + hexKey.Substring(32, 32));
+            AddMessage("\r\n" + "The HMAC Key for SPS101 channel: " + hexKey.Substring(64, 32));
+
+            spsKeyGenBtn.Enabled = false;
+            spsSecretKey.Enabled = false;
+        }
+
+        private void ifKeyGenBtn_Click(object sender, EventArgs e)
+        {
+            string secretKey = ifSecretKey.Text;
+
+            if (secretKey == "")
+            {
+                AddMessage("\r\n\r\n" + "The secret key for IF100 channel cannot be empty!");
+                return;
+            }
+
+            byte[] hashedKey = hashWithSHA512(secretKey);
+            string hexKey = generateHexStringFromByteArray(hashedKey);
+            ifKey = hexStringToByteArray(hexKey.Substring(0, 32));
+            ifIV = hexStringToByteArray(hexKey.Substring(32, 32));
+            ifHMACkey = hexStringToByteArray(hexKey.Substring(64, 32));
+
+            AddMessage("\r\n\r\n" + "The AES128 Key for IF100 channel: " + hexKey.Substring(0, 32));
+            AddMessage("\r\n" + "The AES128 IV for IF100 channel: " + hexKey.Substring(32, 32));
+            AddMessage("\r\n" + "The HMAC Key for IF100 channel: " + hexKey.Substring(64, 32));
+
+            ifKeyGenBtn.Enabled = false;
+            ifSecretKey.Enabled = false;
+            
+        }
+
+        private void broadcastMessage(byte[] message, string channel)
+        {
+            for (int x = 0; x < active_users.Count(); x++)
+            {
+                if (getChannel(active_users[x]) == channel)
+                {
+                    socketList[x].Send(message);
+                }
+            }
+        }
+
         private void Receive()
         {
             Socket s = socketList[socketList.Count - 1];
             bool connected = true;
             bool loggedIn = false;
+            string subscribedChannel = "";
             string user = "";
 
             while (connected && !terminating)
@@ -162,10 +260,19 @@ namespace Secure_Channel_Server
                 {
                     if (loggedIn)
                     {
-                        while (loggedIn)
+                        while (loggedIn && connected && !terminating)
                         {
                             Byte[] buffer = new Byte[3072];
                             s.Receive(buffer);
+                            // Bir mesaj geldi, doğru channel'ı bul oraya logu gir. Broadcast fonkunu çağır bütün online clientlera mesajı olduğu gibi gönder.
+
+                            AddMessage("\r\n\r\n" + "A message came from " + user + " to channel " + subscribedChannel + " and it is broadcasted to all online clients in that channel.");
+
+                            if (subscribedChannel == "IF100") ifChannel.AppendText("\r\n\r\n" + "Incoming message from " + user + ": " + Encoding.ASCII.GetString(buffer));
+                            else if (subscribedChannel == "SPS101") spsChannel.AppendText("\r\n\r\n" + "Incoming message from " + user + ": " + Encoding.ASCII.GetString(buffer));
+                            else if (subscribedChannel == "MATH101") mathChannel.AppendText("\r\n\r\n" + "Incoming message from " +user +": " + Encoding.ASCII.GetString(buffer));
+
+                            broadcastMessage(buffer, subscribedChannel);
                         }
                         
                     }
@@ -219,6 +326,11 @@ namespace Secure_Channel_Server
 
                                 AddMessage("\r\n\r\n" + getClientIp(s.RemoteEndPoint) + " There is no enrolled user with name " + user +"! So that HMAC verification skipped, and response sent!");
                             }
+                            else if ((getChannel(user) == "IF100" && ifKey == null) || (getChannel(user) == "SPS101" && spsKey == null) || (getChannel(user) == "MATH101" && mathKey == null))
+                            {
+                                response = "not_available";
+                                AddMessage("\r\n\r\n" + getClientIp(s.RemoteEndPoint) + " The "+ getChannel(user) + " channel is currently not available. " + user + " cannot join the channel.");
+                            }
                             else
                             {
                                 // lower quarter of string means first 25% of string
@@ -236,11 +348,38 @@ namespace Secure_Channel_Server
                                     }
                                     else
                                     {
-                                        response = "success";
+                                        response = "success:";
+
+                                        string channel = getChannel(user);
+
+                                        if (channel == "MATH101")
+                                        {
+                                            string channelKeys = generateHexStringFromByteArray(mathKey) + ":" + generateHexStringFromByteArray(mathIV) + ":" + generateHexStringFromByteArray(mathHMACkey) + ":" + "MATH101";
+                                            response += channelKeys;
+                                        }
+                                        else if (channel == "SPS101")
+                                        {
+                                            string channelKeys = generateHexStringFromByteArray(spsKey) + ":" + generateHexStringFromByteArray(spsIV) + ":" + generateHexStringFromByteArray(spsHMACkey) + ":" + "SPS101";
+                                            response += channelKeys;
+                                        }
+                                        else if (channel == "IF100")
+                                        {
+                                            string channelKeys = generateHexStringFromByteArray(ifKey) + ":" + generateHexStringFromByteArray(ifIV) + ":" + generateHexStringFromByteArray(ifHMACkey) + ":" + "IF100" ;
+                                            response += channelKeys;
+                                        }
+                                        else
+                                        {
+                                            AddMessage("The channel name could not recognized!");
+                                        }
+                                        
 
                                         AddMessage("\r\n\r\n" + getClientIp(s.RemoteEndPoint) +"  " + user +" is successfully authenticated!");
+
+                                        AddMessage("\r\n\r\n" + "Plaintext response message is: " + response);
+
                                         active_users.Add(user);
                                         loggedIn = true;
+                                        subscribedChannel = getChannel(user);
                                     }
                                 }
                                 else
@@ -534,6 +673,18 @@ namespace Secure_Channel_Server
             return result;
         }
 
+        static byte[] hashWithSHA512(string input)
+        {
+            // convert input string to byte array
+            byte[] byteInput = Encoding.Default.GetBytes(input);
+            // create a hasher object from System.Security.Cryptography
+            SHA512CryptoServiceProvider sha512Hasher = new SHA512CryptoServiceProvider();
+            // hash and save the resulting byte array
+            byte[] result = sha512Hasher.ComputeHash(byteInput);
+
+            return result;
+        }
+
         // signing with RSA
         static byte[] signWithRSA(string input, int algoLength, string xmlString)
         {
@@ -605,5 +756,7 @@ namespace Secure_Channel_Server
 
             return result;
         }
+
+        
     }
 }
