@@ -86,6 +86,9 @@ namespace Secure_Channel_Server
 
             if (Int32.TryParse(txtPort.Text, out serverPort))
             {
+                mathKeyGenBtn.Enabled = true;
+                ifKeyGenBtn.Enabled = true;
+                spsKeyGenBtn.Enabled = true;
                 btnStop.Enabled = true;
 
                 serverSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
@@ -117,11 +120,15 @@ namespace Secure_Channel_Server
         {
             listening = false;
             terminating = true;
-            AddMessage("Following disconnected due to termination!");
-            for (int i = 0; i < socketList.Count; i++)
+            AddMessage("");
+            if (socketList.Count > 0)
             {
-                AddMessage(" - " + getClientIp(socketList[i].RemoteEndPoint));
-                socketList[i].Close();
+                AddMessage("Following disconnected due to termination!");
+                for (int i = 0; i < socketList.Count; i++)
+                {
+                    AddMessage(" - " + getClientIp(socketList[i].RemoteEndPoint));
+                    socketList[i].Close();
+                }
             }
             serverSocket.Close();
             socketList.Clear();
@@ -131,6 +138,25 @@ namespace Secure_Channel_Server
             btnStart.Enabled = true;
             txtPort.ReadOnly = false;
             txtPort.Enabled = true;
+
+            mathKey = new byte[0];
+            mathIV = new byte[0];
+            mathHMACkey = new byte[0];
+            mathSecretKey.Enabled = true;
+            mathSecretKey.Clear();
+
+            ifKey = new byte[0];
+            ifIV = new byte[0];
+            ifHMACkey = new byte[0];
+            ifSecretKey.Enabled = true;
+            ifSecretKey.Clear();
+
+            spsKey = new byte[0];
+            spsIV = new byte[0];
+            spsHMACkey = new byte[0];
+            spsSecretKey.Enabled = true;
+            spsSecretKey.Clear();
+
             txtPort.Clear();
         }
 

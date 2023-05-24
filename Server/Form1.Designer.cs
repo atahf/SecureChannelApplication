@@ -115,6 +115,7 @@
             // 
             this.mathKeyGenBtn.Location = new System.Drawing.Point(61, 665);
             this.mathKeyGenBtn.Name = "mathKeyGenBtn";
+            this.mathKeyGenBtn.Enabled = false;
             this.mathKeyGenBtn.Size = new System.Drawing.Size(125, 29);
             this.mathKeyGenBtn.TabIndex = 6;
             this.mathKeyGenBtn.Text = "Generate Key";
@@ -125,6 +126,7 @@
             // 
             this.spsKeyGenBtn.Location = new System.Drawing.Point(388, 665);
             this.spsKeyGenBtn.Name = "spsKeyGenBtn";
+            this.spsKeyGenBtn.Enabled = false;
             this.spsKeyGenBtn.Size = new System.Drawing.Size(125, 29);
             this.spsKeyGenBtn.TabIndex = 7;
             this.spsKeyGenBtn.Text = "Generate Key";
@@ -135,6 +137,7 @@
             // 
             this.ifKeyGenBtn.Location = new System.Drawing.Point(746, 665);
             this.ifKeyGenBtn.Name = "ifKeyGenBtn";
+            this.ifKeyGenBtn.Enabled = false;
             this.ifKeyGenBtn.Size = new System.Drawing.Size(125, 29);
             this.ifKeyGenBtn.TabIndex = 8;
             this.ifKeyGenBtn.Text = "Generate Key";
